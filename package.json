@@ -1,0 +1,28 @@
+{
+  "name": "lean-state",
+  "version": "1.0.1",
+  "description": "A simple yet powerful way to manage state and reactive dataflow",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/attack-monkey/lean-state.git"
+  },
+  "keywords": [
+    "state",
+    "reactive",
+    "store"
+  ],
+  "author": "attack-monkey",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/attack-monkey/lean-state/issues"
+  },
+  "homepage": "https://github.com/attack-monkey/lean-state#readme",
+  "devDependencies": {
+    "typescript": "^4.0.3"
+  }
+}
