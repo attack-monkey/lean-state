@@ -109,7 +109,7 @@ type Cats = Record<string, Cat>
 
 // This is a very efficient data-flow, since nothing is actually listening to cats.
 // Even currentCatId is a once-only-listener.
-// The only thing being listened to catUpdatedId, and this listener is cleaned up whenever the current cat changes.
+// The only thing being listened to is catUpdatedId, and this listener is cleaned up whenever the current cat changes.
 
 type Global = {
   cats: Cats
