@@ -1,6 +1,6 @@
 {
   "name": "lean-state",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "A simple yet powerful way to manage state and reactive dataflow",
   "main": "lib/index.js",
   "scripts": {
