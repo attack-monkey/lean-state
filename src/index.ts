@@ -1,6 +1,6 @@
 type Subscriptions<S> = Record<string, Record<string, (s: S) => void >>
 
-const setState_ = <S>(state, subs) => (stateKey: keyof S, stateAtKey: S[keyof S]) => {
+const setState_ = <S>(state, subs) => <K extends keyof S>(stateKey: K, stateAtKey: S[K]) => {
   const state_ = state as S
   const subs_ = subs as Subscriptions<S>
   ;state_[stateKey] = stateAtKey
@@ -77,12 +77,12 @@ export const register = <S, SK>() => {
 }
 
 export type LeanState<S, SK> = {
-  setState: (state, subs) => (stateKey: keyof S, stateAtKey: S[keyof S]) => void
-  fromStateOnce: (state) => <K extends keyof S>(stateKeys: K[], fn: (state: S) => any) => void
-  fromState: (state, subs) => <K extends keyof S>(subKey: SK, stateKeys: K[], fn: (state: S) => any) => void
-  fromStateWhile: (state, subs) => <K extends keyof S>(subKey: SK, condition: (state: S) => boolean, stateKeys: K[], fn: (state: S) => any) => void
-  fromNextState: (subs) => <K extends keyof S>(subKey: SK, stateKeys: K[], fn: (state: S) => any) => void
-  fromNextStateWhile: (state, subs) => <K extends keyof S>(subKey: SK, condition: (state: S) => boolean, stateKeys: K[], fn: (state: S) => any) => void
+  setState: <K extends keyof S>(stateKey: K, stateAtKey: S[K]) => void
+  fromStateOnce: (fn: (state: S) => any) => void
+  fromState: <K extends keyof S>(subKey: SK, stateKeys: K[], fn: (state: S) => any) => void
+  fromStateWhile: <K extends keyof S>(subKey: SK, condition: (state: S) => boolean, stateKeys: K[], fn: (state: S) => any) => void
+  fromNextState: <K extends keyof S>(subKey: SK, stateKeys: K[], fn: (state: S) => any) => void
+  fromNextStateWhile: <K extends keyof S>(subKey: SK, condition: (state: S) => boolean, stateKeys: K[], fn: (state: S) => any) => void
 }
 
 
