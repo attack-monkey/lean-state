@@ -1,7 +1,11 @@
-# lean-state
+# lean-state 2.0
 A State Manager built for Lean Functional Typescript
 
 > Checkout: https://github.com/attack-monkey/Lean-Functional-Typescript
+
+# Changes from 1.x
+
+- Syntax changes to add more context to queries
 
 # Install
 

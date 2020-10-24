@@ -1,16 +1,45 @@
 export declare const register: <S, SK>() => {
-    setState: <K extends keyof S>(stateKey: K, stateAtKey: S[K]) => void;
-    fromStateOnce: (fn: (state: S) => any) => void;
-    fromState: <K_1 extends keyof S>(subKey: SK, stateKeys: K_1[], fn: (state: S) => any) => void;
-    fromStateWhile: <K_2 extends keyof S>(subKey: SK, condition: (state: S) => boolean, stateKeys: K_2[], fn: (state: S) => any) => void;
-    fromNextState: <K_3 extends keyof S>(subKey: SK, stateKeys: K_3[], fn: (state: S) => any) => void;
-    fromNextStateWhile: <K_4 extends keyof S>(subKey: SK, condition: (state: S) => boolean, stateKeys: K_4[], fn: (state: S) => any) => void;
+    set: <K extends keyof S>(key: K) => {
+        with: (value: S[K]) => void;
+        at: <IK extends keyof S[K]>(itemKey: IK) => {
+            with: (item: S[K][IK]) => void;
+        };
+    };
+    get: () => S;
+    once: (fn: (state: S) => any) => void;
+    listenOn: (subKey: SK) => {
+        for: <K_1 extends keyof S>(keys: K_1[]) => {
+            subscribe: (fn: (state: S) => any) => void;
+            while: (condition: (state: S) => boolean) => {
+                subscribe: (fn: (state: S) => any) => void;
+            };
+        };
+        fromNext: <K_2 extends keyof S>(keys: K_2[]) => {
+            subscribe: (fn: (state: S) => any) => void;
+            while: (condition: (state: S) => boolean) => {
+                subscribe: (fn: (state: S) => any) => void;
+            };
+        };
+    };
 };
 export declare type LeanState<S, SK> = {
-    setState: <K extends keyof S>(stateKey: K, stateAtKey: S[K]) => void;
-    fromStateOnce: (fn: (state: S) => any) => void;
-    fromState: <K extends keyof S>(subKey: SK, stateKeys: K[], fn: (state: S) => any) => void;
-    fromStateWhile: <K extends keyof S>(subKey: SK, condition: (state: S) => boolean, stateKeys: K[], fn: (state: S) => any) => void;
-    fromNextState: <K extends keyof S>(subKey: SK, stateKeys: K[], fn: (state: S) => any) => void;
-    fromNextStateWhile: <K extends keyof S>(subKey: SK, condition: (state: S) => boolean, stateKeys: K[], fn: (state: S) => any) => void;
+    set: <K extends keyof S>(key: K) => ({
+        with: (value: S[K]) => void;
+    });
+    get: <S>() => S;
+    once: (fn: (state: S) => any) => void;
+    listenOn: (subscriptionKey: SK) => ({
+        for: <K extends keyof S>(key: K[]) => ({
+            while: (condition: (state: S) => boolean) => ({
+                subscribe: (fn: (state: S) => any) => void;
+            });
+            subscribe: (fn: (state: S) => any) => void;
+        });
+        fromNext: <K extends keyof S>(key: K[]) => ({
+            while: (condition: (state: S) => boolean) => ({
+                subscribe: (fn: (state: S) => any) => void;
+            });
+            subscribe: (fn: (state: S) => any) => void;
+        });
+    });
 };
