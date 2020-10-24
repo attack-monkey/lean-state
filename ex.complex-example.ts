@@ -1,4 +1,4 @@
-import { register } from './src/index'
+import { register } from './lib'
 
 type Car = {
   make: string
@@ -29,23 +29,15 @@ const listenToAllCarChanges = () => {
 const listenToNewFocusCar = (id: string) => {
   // Set up the car to focus on
   global.set('focusOnCar').with(id)
-  // Set up a lockValue. When the focusOnCar changes from this lockValue, the listener will tear down and need to be re-created
-  global.once(({ focusOnCar: lockValue }) => {
-    // Only set up the listener if there is a car in focus
-    if (lockValue) {
-      global
-        .listenOn('listener2')
-        // listen to the next change to lastUpdatedCar
-        .fromNext(['lastUpdatedCar'])
-        // Tear listener down if the focusOnCar changes
-        .while(({ focusOnCar }) => focusOnCar === lockValue)
-        .subscribe(({ cars, focusOnCar, lastUpdatedCar }) => {
-          if(lastUpdatedCar === focusOnCar) {
-            console.log(`Focussed car is ${focusOnCar} and it changed to => ${JSON.stringify(cars[focusOnCar], null, 2)}`)
-          }
-        })
-    }
-  })
+  global
+    .listenOn('listener2')
+    // listen to the next change to lastUpdatedCar
+    .fromNext(['lastUpdatedCar'])
+    .subscribe(({ cars, focusOnCar, lastUpdatedCar }) => {
+      if(lastUpdatedCar === focusOnCar) {
+        console.log(`Focussed car is ${focusOnCar} and it changed to => ${JSON.stringify(cars[focusOnCar], null, 2)}`)
+      }
+    })
 }
 
 const setInitialData = () => {

@@ -1,4 +1,4 @@
-import { register } from './src/index'
+import { register } from './lib'
 
 type Global = {
   greeting: string

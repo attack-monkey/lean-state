@@ -25,158 +25,157 @@ import { register } from 'lean-state'
 
 # Basics
 
-First the State interface is created which can be thought of as a schema for your state.
-
 ```typescript
 
-interface State {
-  greeting?: string
-}
-
-```
-
-```typescript
-
-followed by a DU (Discriminated Union) of listener-ids - which represent the individual listeners listening for state changes
-
-type Listeners =
-  | 'myListener'
-
-```
-
-Then register State with 
-
-```typescript
-
-`import { register } from 'lean-state'`
-
-const { setState, fromState, fromStateWhile } = register<State, Listeners>()
-
-```
-
-^^ This creates a library of functions that are aware of the State and Listeners within your app.
-
-To initialise state at a given node:
-
-```typescript
-
-setState('greeting', 'hello world') // sends data to state.greeting
-
-```
-
-To register a listener and listen for state changes...
-
-```typescript
-
-// listens to changes in state.greeting and calls myPureFunction with it
-
-fromState(
-  'myListener',
-  ['greeting'],
-  ({ greeting }) => myPureFunction(greeting)
-) 
-
-```
-
-To mutate data
-
-```typescript
-
-setState('greeting', 'hello again') // send a data change.
-
-```
-
-# A more complex example
-
-```typescript
-
-// Managing Records of things ...
-
-/*
- * State is a key-val store with Reactive data-flow.
- * So while you can listen for changes in a val at a given key, it's all or nothing.
- * You can't listen for some changes in a val and not others.
- * So when dealing with Records of items, you still need to think in terms of key-val.
- * This requires using other key-vals to help only respond to changes that you care about.
- */
-
-type Cat = {
-  name: string
-}
-
-type Cats = Record<string, Cat>
-
-// Here we'll use currentCatId to focus in on one particular cat at a time.
-// We then use catUpdatedId to indicate which cat is being updated. 
-// We listen to this rather than listening to `cats` - because `cats` tells us when any change to `cats` occurs.
-// We only care about the currentCat.
-
-// This is a very efficient data-flow, since nothing is actually listening to cats.
-// Even currentCatId is a once-only-listener.
-// The only thing being listened to is catUpdatedId, and this listener is cleaned up whenever the current cat changes.
+import { register } from 'lean-state'
 
 type Global = {
-  cats: Cats
-  currentCatId: string
-  catUpdatedId?: string
+  greeting: string
 }
 
-type GlobalListeners =
-  | 'myListener'
+type Listeners =
+  | 'listener1'
+  | 'listener2'
+  | 'listener3'
 
-const global = register<Global, GlobalListeners>()
+// register
+const global = register<Global, Listeners>()
 
-global.setState('cats', { '1': { name: 'garfield' }})
-global.setState('currentCatId', '1')
+// set
+global.set('greeting').with('hello world')
 
-const listenToNewCat = () => {
+// get
+console.log(
+  global.get().greeting
+)
 
-  // get the current catId
-  global.fromStateOnce(['currentCatId'], ({ currentCatId: comparisonId }) => {
-    console.log(`I am the new current cat ${comparisonId}.`)
-    // listen for updates on the catUpdatedId ONLY while the current id remains the same - otherwise destroy this listener.
-    global.fromNextStateWhile('myListener', ({ currentCatId }) => currentCatId === comparisonId, ['catUpdatedId'], ({ cats, currentCatId, catUpdatedId }) => {
-      // Only respond to changes in the current cat
-      if(currentCatId === catUpdatedId) {
-        console.log(`I am current cat ${ currentCatId } and I just got updated. My name is ${cats ? cats[currentCatId as string].name : 'unknown'}`)
+// get the current and pass to function
+global.once(
+  ({ greeting }) => console.log(greeting)
+)
+
+// set up a listener...
+global
+  .listenOn('listener1')
+  .for(['greeting'])
+  .subscribe(({ greeting }) => console.log('listener1: ' + greeting))
+
+// make changes and the listener will react
+global.set('greeting').with('howdy y\'all')
+global.set('greeting').with('wassup')
+global.set('greeting').with('g\'day mate')
+
+// set up a listener that auto tears down when a condition is no longer met
+global
+  .listenOn('listener2')
+  .for(['greeting'])
+  .while(({ greeting }) => greeting !== 'stop listening')
+  .subscribe(({ greeting }) => console.log('listener2: ' + greeting))
+
+// make changes and both listeners will react
+global.set('greeting').with('good day')
+
+// this next change will trigger listener2 to tear down...
+global.set('greeting').with('stop listening')
+
+// listeners can also be set up to listen, starting from the next change...
+global
+  .listenOn('listener3')
+  .fromNext(['greeting'])
+  .while(({ greeting }) => greeting !== 'stop listening')
+  .subscribe(({ greeting }) => console.log('listener3: ' + greeting))
+
+// And more changes...
+global.set('greeting').with('heeeey!!!')
+global.set('greeting').with('stop listening')
+
+```
+
+# A complex example
+
+Lean-state is a key-value store, so while complex data can be stored at a given key, 
+listeners can only listen to changes at that top-level key.
+
+This isn't really a problem at all - but does change the way you think about listening to changes in data.
+
+If for example a key stores a Record of items - but your app is focused on changes only at a given item - then it's a good idea to
+also capture which id is being focused on and which id is being changed.
+
+```typescript
+
+import { register } from 'lean-state'
+
+type Car = {
+  make: string
+  color: string
+}
+
+type Global = {
+  cars: Record<string, Car>
+  lastUpdatedCar: string,
+  focusOnCar: string
+}
+
+type Listeners = 
+  | 'listener1'
+  | 'listener2'
+
+const global = register<Global, Listeners>()
+
+const listenToAllCarChanges = () => {
+  global
+    .listenOn('listener1')
+    .fromNext(['lastUpdatedCar'])
+    .subscribe(({ cars, lastUpdatedCar }) =>
+      console.log(`change to car ${lastUpdatedCar} => ${JSON.stringify(cars[lastUpdatedCar], null, 2)}`)
+    )
+}
+
+const listenToNewFocusCar = (id: string) => {
+  // Set up the car to focus on
+  global.set('focusOnCar').with(id)
+  global
+    .listenOn('listener2')
+    // listen to the next change to lastUpdatedCar
+    .fromNext(['lastUpdatedCar'])
+    .subscribe(({ cars, focusOnCar, lastUpdatedCar }) => {
+      if(lastUpdatedCar === focusOnCar) {
+        console.log(`Focussed car is ${focusOnCar} and it changed to => ${JSON.stringify(cars[focusOnCar], null, 2)}`)
       }
     })
+}
+
+const setInitialData = () => {
+  global.set('cars').with({
+    '1': { make: 'Toyota', color: 'red' },
+    '2': { make: 'Toyota', color: 'blue'}
   })
+  global.set('focusOnCar').with('1')
 }
 
-listenToNewCat()
-
-const newCats: Cats = {
-  '1': {
-    name: 'felix'
+const updateCar = (id: string) => ({
+  with: (car: Car) => {
+    global.set('cars').at(id).with(car)
+    global.set('lastUpdatedCar').with(id)
   }
-}
+})
 
-global.setState('cats', newCats)
-global.setState('catUpdatedId', '1')
+// Set up data
+setInitialData()
 
-const newCats_: Cats = {
-  ...newCats, 
-  '2': {
-    name: 'Sylvester'
-  }
-}
+// Set up listeners
+listenToAllCarChanges()
+listenToNewFocusCar('1')
 
+// Make updates
+updateCar('3').with({ make: 'Corvette', color: 'red' })
+updateCar('1').with({ make: 'Ferrari', color: 'pink' })
 
-global.setState('cats', newCats_)
-global.setState('catUpdatedId', '2')
+// Change focus car, which re-creates the listener
+listenToNewFocusCar('2')
 
-global.setState('currentCatId', '2')
-listenToNewCat()
-
-const newCats__: Cats = {
-  ...newCats, 
-  '2': {
-    name: 'Puss n Boots'
-  }
-}
-
-global.setState('cats', newCats__)
-global.setState('catUpdatedId', '2')
+// Make more changes
+updateCar('1').with({ make: 'Ferrari', color: 'red' })
+updateCar('2').with({ make: 'Lamborgini', color: 'grey' })
 
 ```
